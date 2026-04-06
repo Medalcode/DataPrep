@@ -10,6 +10,7 @@
 [![Tests](https://img.shields.io/badge/Tests-56%20passed-22c55e?logo=pytest)](tests/)
 [![CI](https://github.com/Medalcode/DataPrep/actions/workflows/ci.yml/badge.svg)](https://github.com/Medalcode/DataPrep/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-1.0.1-6366f1)](CHANGELOG)
 
 ---
 
@@ -264,6 +265,24 @@ Después del pipeline:
 **Área:** Data Engineering / ETL Pipeline  
 **Stack:** Python · Pandas · Apache Airflow · Streamlit  
 **Salida laboral:** Data Engineer, Analytics Engineer, Data Analyst
+
+---
+
+## 📋 Changelog
+
+### v1.0.1 — 2026-04-06
+
+**Bug fixes:**
+
+- **`dags/data_pipeline_dag.py`** — `task_load` pasaba `after_report` como `before_report` al generar el reporte HTML, haciendo que las métricas "antes" y "después" fueran idénticas. Se serializa ahora el `DataQualityReport` completo como JSON en XCom desde `task_validate` y se reconstruye correctamente en `task_load`.
+- **`src/transformation.py`** — `pd.cut()` con `bins=[0, 100, ...]` y `right=False` generaba `NaN` silencioso en `categoria_venta` cuando `total == 0`. Corregido ajustando el límite inferior del bin a `-0.001`.
+- **`src/cleaning.py`** — `col.str.strip()` convertía a `NaN` cualquier valor no-string (ej. enteros almacenados en columnas `object`). Reemplazado por `col.map(lambda v: v.strip() if isinstance(v, str) else v)`. Mismo fix aplicado a `lowercase_strings`. Actualizado `select_dtypes` para incluir dtype `"string"` además de `"object"` (compatibilidad Pandas 3+).
+- **`src/validation.py`** — Actualizado `select_dtypes` para incluir dtype `"string"` junto a `"object"` (Pandas 4 deprecation warning).
+- **`tests/test_cleaning.py`** — Corregidos comentarios del fixture: la fila en índice 4 es duplicado exacto de la fila en índice 1. Actualizado `select_dtypes` en el test de strip.
+
+### v1.0.0 — 2026-01-01
+
+- Release inicial del pipeline completo: ingesta, validación, limpieza, transformación, reporte HTML y DAG de Airflow.
 
 ---
 

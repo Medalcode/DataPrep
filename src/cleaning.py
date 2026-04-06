@@ -134,16 +134,23 @@ def clean_data(
         logger.info(f"Dropped all-null rows → {len(df):,} rows remaining")
 
     # 3. Strip whitespace from strings
+    # NOTE: We use a value-level map instead of col.str.strip() to avoid
+    # silently converting non-string values (e.g. ints in object columns)
+    # to NaN. Only actual str instances are stripped; all other types are
+    # left untouched.
     if config.get("strip_strings", True):
         obj_cols = _cat_cols(df)
-        df[obj_cols] = df[obj_cols].apply(lambda col: col.str.strip())
+        df[obj_cols] = df[obj_cols].apply(
+            lambda col: col.map(lambda v: v.strip() if isinstance(v, str) else v)
+        )
         logger.debug(f"Stripped whitespace from {len(obj_cols)} string columns")
 
     # 4. Lowercase string columns
+    # Same rationale: apply lower() only to actual str values.
     if config.get("lowercase_strings", False):
         obj_cols = _cat_cols(df)
         df[obj_cols] = df[obj_cols].apply(
-            lambda col: col.str.lower() if col.dtype in ("object", "string") else col
+            lambda col: col.map(lambda v: v.lower() if isinstance(v, str) else v)
         )
 
     # 5. Drop duplicates

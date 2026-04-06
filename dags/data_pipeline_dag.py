@@ -69,8 +69,9 @@ def task_ingest(**context):
 
 def task_validate(**context):
     """Validate raw data and log quality report."""
+    import json
     import pandas as pd
-    from src.validation import validate_data
+    from src.validation import validate_data, DataQualityReport
     from src.logger import get_logger
     logger = get_logger("airflow.validate", log_dir=LOGS_DIR)
 
@@ -90,8 +91,24 @@ def task_validate(**context):
         for alert in report.alerts:
             logger.warning(alert)
 
+    # Serialize the *full* DataQualityReport so task_load can build an
+    # accurate before/after comparison in the HTML report.
+    # Only primitive types are stored so XCom (SQLite backend) can handle it.
+    before_report_dict = {
+        "total_rows":               report.total_rows,
+        "total_cols":               report.total_cols,
+        "duplicate_rows":           report.duplicate_rows,
+        "duplicate_pct":            report.duplicate_pct,
+        "null_counts":              report.null_counts,
+        "null_pcts":                report.null_pcts,
+        "dtypes":                   report.dtypes,
+        "outlier_counts":           report.outlier_counts,
+        "columns_with_mixed_types": report.columns_with_mixed_types,
+        "alerts":                   report.alerts,
+    }
+
     context["ti"].xcom_push(key="df_json", value=df.to_json(orient="split"))
-    context["ti"].xcom_push(key="before_report", value=str(summary))
+    context["ti"].xcom_push(key="before_report", value=json.dumps(before_report_dict))
 
 
 def task_clean(**context):
@@ -128,11 +145,11 @@ def task_transform(**context):
 
 def task_load(**context):
     """Save cleaned/transformed data to CSV and generate quality report."""
+    import json
     import pandas as pd
-    from src.validation import validate_data
+    from src.validation import validate_data, DataQualityReport
     from src.report import generate_quality_report
     from src.logger import get_logger
-    import json
     logger = get_logger("airflow.load", log_dir=LOGS_DIR)
 
     df_json = context["ti"].xcom_pull(task_ids="transform_data", key="df_json")
@@ -143,17 +160,35 @@ def task_load(**context):
     df.to_csv(DEFAULT_OUTPUT_FILE, index=False, encoding="utf-8")
     logger.info(f"Saved {len(df)} clean rows to {DEFAULT_OUTPUT_FILE}")
 
-    # Validate after for report
+    # Validate after-pipeline data
     after_report = validate_data(df)
 
-    # Rebuild before report from xcom metadata (simplified)
-    before_summary_str = context["ti"].xcom_pull(task_ids="validate_data", key="before_report")
-    logger.info(f"Before summary: {before_summary_str}")
+    # Reconstruct the full before-pipeline DataQualityReport from XCom.
+    # This gives the HTML report accurate "before vs after" metrics.
+    before_report_json = context["ti"].xcom_pull(task_ids="validate_data", key="before_report")
+    before_report_dict = json.loads(before_report_json)
 
-    # Generate report (use after as approximation if before not serialized)
+    before_report = DataQualityReport(
+        total_rows=before_report_dict["total_rows"],
+        total_cols=before_report_dict["total_cols"],
+        duplicate_rows=before_report_dict["duplicate_rows"],
+        duplicate_pct=before_report_dict["duplicate_pct"],
+        null_counts=before_report_dict["null_counts"],
+        null_pcts=before_report_dict["null_pcts"],
+        dtypes=before_report_dict["dtypes"],
+        outlier_counts={k: int(v) for k, v in before_report_dict["outlier_counts"].items()},
+        columns_with_mixed_types=before_report_dict["columns_with_mixed_types"],
+        alerts=before_report_dict["alerts"],
+    )
+    logger.info(
+        f"Before report restored from XCom — "
+        f"{before_report.total_rows} rows, {len(before_report.alerts)} alerts"
+    )
+
+    # Generate report with real before/after comparison
     DEFAULT_REPORT_FILE.parent.mkdir(parents=True, exist_ok=True)
     generate_quality_report(
-        before_report=after_report,  # note: real pipelines store full before report
+        before_report=before_report,
         after_report=after_report,
         report_path=DEFAULT_REPORT_FILE,
         version=PIPELINE_VERSION,

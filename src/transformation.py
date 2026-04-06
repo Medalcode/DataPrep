@@ -83,7 +83,11 @@ def add_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
         df["total_con_iva"] = (df["total"] * 1.19).round(2)
         logger.info("Derived column 'total_con_iva' = total × 1.19")
 
-        bins   = [0, 100, 500, 1000, float("inf")]
+        # NOTE: bins start at -0.001 (not 0) so that total == 0 falls inside
+        # the first bin [−0.001, 100) after clip(lower=0). Using 0 as the
+        # lower bound with right=False would exclude exact zeros, producing
+        # silent NaN values in 'categoria_venta'.
+        bins   = [-0.001, 100, 500, 1000, float("inf")]
         labels = ["Bajo", "Medio", "Alto", "Premium"]
         df["categoria_venta"] = pd.cut(
             df["total"].clip(lower=0),

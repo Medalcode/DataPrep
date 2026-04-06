@@ -16,7 +16,9 @@ from src.cleaning import clean_data, normalize_column_names, impute_numeric, imp
 
 @pytest.fixture
 def dirty_df():
-    # Row 4 is an exact duplicate of row 1 (same values in all columns)
+    # Row at index 4 is an exact duplicate of the row at index 1
+    # (same values in ALL columns, including ID Venta).
+    # drop_duplicates() must remove it, leaving 4 unique rows.
     return pd.DataFrame({
         "ID Venta":  [1, 2, 3, 4, 2],
         "Producto":  ["Laptop", "Mouse", "Teclado", "Auriculares", "Mouse"],
@@ -99,5 +101,7 @@ class TestCleanData:
 
     def test_row_count_reduced(self, dirty_df):
         result = clean_data(dirty_df)
-        # Row 4 is an exact duplicate of row 2 (same ID, product, price, quantity)
+        # Row at index 4 is an exact duplicate of row at index 1
+        # (ID=2, Producto=Mouse, Precio=29.99, Cantidad=5).
+        # After cleaning, that row should be removed.
         assert len(result) < len(dirty_df)
