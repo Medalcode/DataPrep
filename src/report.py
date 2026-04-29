@@ -3,12 +3,12 @@ src/report.py
 -------------
 HTML data quality report generator for DataPrep Pipeline.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
 
-import pandas as pd
 from jinja2 import Template
 
 from src.logger import get_logger
@@ -134,7 +134,7 @@ def generate_quality_report(
     report_path.parent.mkdir(parents=True, exist_ok=True)
 
     template = Template(HTML_TEMPLATE)
-    columns  = list(before_report.null_counts.keys())
+    columns = list(before_report.null_counts.keys())
 
     html = template.render(
         before=before_report,

@@ -4,10 +4,12 @@ src/transformation.py
 Data transformation module for DataPrep Pipeline.
 Applies domain-aware transformations to produce analysis-ready data.
 """
+
 from __future__ import annotations
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from src.logger import get_logger
 
 logger = get_logger("transformation")
@@ -28,7 +30,8 @@ def parse_date_columns(df: pd.DataFrame, date_cols: list[str] | None = None) -> 
     if date_cols is None:
         # Auto-detect likely date column names
         candidates = [
-            c for c in df.columns
+            c
+            for c in df.columns
             if any(k in c.lower() for k in ["fecha", "date", "time", "hora", "timestamp"])
         ]
     else:
@@ -52,9 +55,9 @@ def parse_date_columns(df: pd.DataFrame, date_cols: list[str] | None = None) -> 
                 logger.warning(f"Column '{col}': {null_dates} dates could not be parsed")
 
             # Extract components
-            df[f"{col}_year"]  = df[col].dt.year
+            df[f"{col}_year"] = df[col].dt.year
             df[f"{col}_month"] = df[col].dt.month
-            df[f"{col}_day"]   = df[col].dt.day
+            df[f"{col}_day"] = df[col].dt.day
             logger.info(f"Parsed date column '{col}' → extracted year/month/day")
         except Exception as e:
             logger.warning(f"Could not parse date column '{col}': {e}")
@@ -87,7 +90,7 @@ def add_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
         # the first bin [−0.001, 100) after clip(lower=0). Using 0 as the
         # lower bound with right=False would exclude exact zeros, producing
         # silent NaN values in 'categoria_venta'.
-        bins   = [-0.001, 100, 500, 1000, float("inf")]
+        bins = [-0.001, 100, 500, 1000, float("inf")]
         labels = ["Bajo", "Medio", "Alto", "Premium"]
         df["categoria_venta"] = pd.cut(
             df["total"].clip(lower=0),

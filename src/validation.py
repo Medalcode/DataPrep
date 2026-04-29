@@ -4,12 +4,13 @@ src/validation.py
 Data validation module for DataPrep Pipeline.
 Detects data quality issues and produces a structured report.
 """
+
 from __future__ import annotations
 
-import pandas as pd
-import numpy as np
 from dataclasses import dataclass, field
-from typing import Dict
+
+import numpy as np
+import pandas as pd
 
 from src.logger import get_logger
 
@@ -29,16 +30,17 @@ def _object_cols(df: pd.DataFrame) -> list:
 @dataclass
 class DataQualityReport:
     """Structured summary of data quality metrics."""
+
     total_rows: int = 0
     total_cols: int = 0
     duplicate_rows: int = 0
     duplicate_pct: float = 0.0
 
     # Per-column stats
-    null_counts: Dict[str, int]   = field(default_factory=dict)
-    null_pcts: Dict[str, float]   = field(default_factory=dict)
-    dtypes: Dict[str, str]        = field(default_factory=dict)
-    outlier_counts: Dict[str, int] = field(default_factory=dict)
+    null_counts: dict[str, int] = field(default_factory=dict)
+    null_pcts: dict[str, float] = field(default_factory=dict)
+    dtypes: dict[str, str] = field(default_factory=dict)
+    outlier_counts: dict[str, int] = field(default_factory=dict)
     columns_with_mixed_types: list = field(default_factory=list)
 
     # Alert flags
@@ -108,7 +110,7 @@ def validate_data(
 
     # ── Duplicates ────────────────────────────────────────────────────────────
     report.duplicate_rows = int(df.duplicated().sum())
-    report.duplicate_pct  = (report.duplicate_rows / max(report.total_rows, 1)) * 100
+    report.duplicate_pct = (report.duplicate_rows / max(report.total_rows, 1)) * 100
     if report.duplicate_pct > duplicate_threshold_pct:
         report.alerts.append(
             f"⚠ High duplicates: {report.duplicate_rows} rows ({report.duplicate_pct:.1f}%)"
@@ -118,10 +120,10 @@ def validate_data(
     null_series = df.isnull().sum()
     for col in df.columns:
         count = int(null_series[col])
-        pct   = (count / max(report.total_rows, 1)) * 100
+        pct = (count / max(report.total_rows, 1)) * 100
         report.null_counts[col] = count
-        report.null_pcts[col]   = round(pct, 2)
-        report.dtypes[col]      = str(df[col].dtype)
+        report.null_pcts[col] = round(pct, 2)
+        report.dtypes[col] = str(df[col].dtype)
         if pct > null_threshold_pct:
             report.alerts.append(f"⚠ High nulls in '{col}': {count} ({pct:.1f}%)")
 

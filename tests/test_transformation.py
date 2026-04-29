@@ -3,30 +3,33 @@ tests/test_transformation.py
 -----------------------------
 Unit tests for the transformation module.
 """
-import pytest
-import pandas as pd
-import numpy as np
-from pathlib import Path
+
 import sys
+from pathlib import Path
+
+import pandas as pd
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.transformation import (
-    parse_date_columns,
     add_derived_columns,
     normalize_numeric_columns,
+    parse_date_columns,
     transform_data,
 )
 
 
 @pytest.fixture
 def base_df():
-    return pd.DataFrame({
-        "fecha":    ["2023-01-15", "2023-06-20", "2024-03-10"],
-        "producto": ["Laptop", "Mouse", "Teclado"],
-        "precio":   [999.99, 29.99, 59.99],
-        "cantidad": [1, 5, 3],
-    })
+    return pd.DataFrame(
+        {
+            "fecha": ["2023-01-15", "2023-06-20", "2024-03-10"],
+            "producto": ["Laptop", "Mouse", "Teclado"],
+            "precio": [999.99, 29.99, 59.99],
+            "cantidad": [1, 5, 3],
+        }
+    )
 
 
 class TestParseDateColumns:

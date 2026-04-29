@@ -1,12 +1,12 @@
-import pytest
-import pandas as pd
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.validation import validate_data
 from src.report import generate_quality_report
+from src.validation import validate_data
 
 
 class TestGenerateQualityReport:

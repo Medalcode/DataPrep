@@ -3,25 +3,25 @@ config/settings.py
 ------------------
 Global configuration for the DataPrep Pipeline.
 """
-import os
+
 from pathlib import Path
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DATA_RAW_DIR       = BASE_DIR / "data" / "raw"
+DATA_RAW_DIR = BASE_DIR / "data" / "raw"
 DATA_PROCESSED_DIR = BASE_DIR / "data" / "processed"
-REPORTS_DIR        = BASE_DIR / "reports"
-LOGS_DIR           = BASE_DIR / "logs"
+REPORTS_DIR = BASE_DIR / "reports"
+LOGS_DIR = BASE_DIR / "logs"
 
 # Default input file
-DEFAULT_INPUT_FILE  = DATA_RAW_DIR / "ventas.csv"
+DEFAULT_INPUT_FILE = DATA_RAW_DIR / "ventas.csv"
 DEFAULT_OUTPUT_FILE = DATA_PROCESSED_DIR / "ventas_cleaned.csv"
 DEFAULT_REPORT_FILE = REPORTS_DIR / "quality_report.html"
 
 # ── Pipeline version ─────────────────────────────────────────────────────────
 PIPELINE_VERSION = "1.0.0"
-PIPELINE_NAME    = "DataPrep Pipeline"
+PIPELINE_NAME = "DataPrep Pipeline"
 
 # ── Cleaning configuration ────────────────────────────────────────────────────
 CLEANING_CONFIG = {
@@ -52,9 +52,9 @@ VALIDATION_CONFIG = {
 }
 
 # ── Airflow ───────────────────────────────────────────────────────────────────
-AIRFLOW_DAG_ID       = "dataprep_pipeline"
-AIRFLOW_SCHEDULE     = "@daily"
-AIRFLOW_OWNER        = "dataprep"
+AIRFLOW_DAG_ID = "dataprep_pipeline"
+AIRFLOW_SCHEDULE = "@daily"
+AIRFLOW_OWNER = "dataprep"
 AIRFLOW_START_DATE_Y = 2024
 AIRFLOW_START_DATE_M = 1
 AIRFLOW_START_DATE_D = 1

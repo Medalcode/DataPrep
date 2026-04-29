@@ -4,21 +4,22 @@ src/cleaning.py
 Data cleaning module for DataPrep Pipeline.
 Applies a configurable set of automatic cleaning rules to a DataFrame.
 """
+
 from __future__ import annotations
 
 import re
-import warnings
-import pandas as pd
+from typing import Any
+
 import numpy as np
-from typing import Any, Dict
+import pandas as pd
 
 from src.logger import get_logger
 
 logger = get_logger("cleaning")
 
-DEFAULT_CONFIG: Dict[str, Any] = {
-    "numeric_imputation": "mean",       # "mean" | "median" | "zero"
-    "categorical_imputation": "mode",    # "mode" | "unknown"
+DEFAULT_CONFIG: dict[str, Any] = {
+    "numeric_imputation": "mean",  # "mean" | "median" | "zero"
+    "categorical_imputation": "mode",  # "mode" | "unknown"
     "drop_all_null_rows": True,
     "drop_duplicates": True,
     "strip_strings": True,
@@ -35,10 +36,7 @@ def normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
     - Replace spaces and special characters with underscores
     """
     df = df.copy()
-    df.columns = [
-        re.sub(r"[^\w]", "_", col.strip().lower()).strip("_")
-        for col in df.columns
-    ]
+    df.columns = [re.sub(r"[^\w]", "_", col.strip().lower()).strip("_") for col in df.columns]
     return df
 
 
@@ -69,11 +67,11 @@ def _cat_cols(df: pd.DataFrame) -> list:
     cols = []
     for col in df.columns:
         dtype = df[col].dtype
-        if isinstance(dtype, pd.CategoricalDtype):
-            cols.append(col)
-        elif isinstance(dtype, pd.StringDtype):
-            cols.append(col)
-        elif dtype == "object":
+        if (
+            isinstance(dtype, pd.CategoricalDtype)
+            or isinstance(dtype, pd.StringDtype)
+            or dtype == "object"
+        ):
             cols.append(col)
     return cols
 
@@ -95,7 +93,7 @@ def impute_categorical(df: pd.DataFrame, strategy: str = "mode") -> pd.DataFrame
 
 def clean_data(
     df: pd.DataFrame,
-    config: Dict[str, Any] | None = None,
+    config: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """
     Apply all cleaning rules to a DataFrame based on the provided config.

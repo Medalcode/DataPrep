@@ -8,6 +8,7 @@ Usage:
     python main.py
     python main.py --input data/raw/ventas.csv --output data/processed/out.csv
 """
+
 import argparse
 import sys
 import time
@@ -17,21 +18,21 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from config.settings import (
+    CLEANING_CONFIG,
     DEFAULT_INPUT_FILE,
     DEFAULT_OUTPUT_FILE,
     DEFAULT_REPORT_FILE,
-    CLEANING_CONFIG,
-    VALIDATION_CONFIG,
+    LOGS_DIR,
     PIPELINE_NAME,
     PIPELINE_VERSION,
-    LOGS_DIR,
+    VALIDATION_CONFIG,
 )
-from src.logger import get_logger
-from src.ingestion import load_csv, load_excel, load_json_api
-from src.validation import validate_data
 from src.cleaning import clean_data
-from src.transformation import transform_data
+from src.ingestion import load_csv, load_excel, load_json_api
+from src.logger import get_logger
 from src.report import generate_quality_report
+from src.transformation import transform_data
+from src.validation import validate_data
 
 logger = get_logger("main", log_dir=LOGS_DIR)
 
@@ -79,9 +80,11 @@ def run_pipeline(
         duplicate_threshold_pct=VALIDATION_CONFIG["duplicate_threshold_pct"],
         iqr_factor=VALIDATION_CONFIG["outlier_iqr_factor"],
     )
-    logger.info(f"  → {before_report.total_rows} rows | {before_report.duplicate_rows} dups "
-                f"| {sum(before_report.null_counts.values())} nulls "
-                f"| {len(before_report.alerts)} alerts")
+    logger.info(
+        f"  → {before_report.total_rows} rows | {before_report.duplicate_rows} dups "
+        f"| {sum(before_report.null_counts.values())} nulls "
+        f"| {len(before_report.alerts)} alerts"
+    )
     if before_report.alerts:
         for alert in before_report.alerts:
             logger.warning(f"  {alert}")
@@ -96,8 +99,10 @@ def run_pipeline(
 
     # ── STEP 5: VALIDATE (after) ────────────────────────────────────────────
     after_report = validate_data(df_transformed)
-    logger.info(f"  → {after_report.total_rows} rows | {after_report.duplicate_rows} dups "
-                f"| {sum(after_report.null_counts.values())} nulls")
+    logger.info(
+        f"  → {after_report.total_rows} rows | {after_report.duplicate_rows} dups "
+        f"| {sum(after_report.null_counts.values())} nulls"
+    )
 
     # ── SAVE OUTPUT ─────────────────────────────────────────────────────────
     logger.info("[5/5] LOAD — Saving results")
@@ -129,25 +134,29 @@ def parse_args() -> argparse.Namespace:
         description="Automated data cleaning and transformation pipeline",
     )
     parser.add_argument(
-        "--input", "-i",
+        "--input",
+        "-i",
         type=Path,
         default=DEFAULT_INPUT_FILE,
         help=f"Input file path (default: {DEFAULT_INPUT_FILE})",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=Path,
         default=DEFAULT_OUTPUT_FILE,
         help=f"Output CSV path (default: {DEFAULT_OUTPUT_FILE})",
     )
     parser.add_argument(
-        "--report", "-r",
+        "--report",
+        "-r",
         type=Path,
         default=DEFAULT_REPORT_FILE,
         help=f"HTML report output path (default: {DEFAULT_REPORT_FILE})",
     )
     parser.add_argument(
-        "--format", "-f",
+        "--format",
+        "-f",
         type=str,
         default="csv",
         choices=["csv", "excel", "api"],
@@ -163,7 +172,7 @@ def parse_args() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
-    args  = parse_args()
+    args = parse_args()
     success = run_pipeline(
         input_path=args.input,
         output_path=args.output,

@@ -4,9 +4,12 @@ src/ingestion.py
 Data ingestion module for DataPrep Pipeline.
 Supports loading data from CSV, Excel, and JSON REST APIs.
 """
+
+from pathlib import Path
+
 import pandas as pd
 import requests
-from pathlib import Path
+
 from src.logger import get_logger
 
 logger = get_logger("ingestion")

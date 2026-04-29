@@ -3,15 +3,16 @@ tests/test_cleaning.py
 ----------------------
 Unit tests for the cleaning module.
 """
-import pytest
-import pandas as pd
-import numpy as np
-from pathlib import Path
+
 import sys
+from pathlib import Path
+
+import pandas as pd
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.cleaning import clean_data, normalize_column_names, impute_numeric, impute_categorical
+from src.cleaning import clean_data, impute_categorical, impute_numeric, normalize_column_names
 
 
 @pytest.fixture
@@ -19,13 +20,14 @@ def dirty_df():
     # Row at index 4 is an exact duplicate of the row at index 1
     # (same values in ALL columns, including ID Venta).
     # drop_duplicates() must remove it, leaving 4 unique rows.
-    return pd.DataFrame({
-        "ID Venta":  [1, 2, 3, 4, 2],
-        "Producto":  ["Laptop", "Mouse", "Teclado", "Auriculares", "Mouse"],
-        "Precio":    [999.99, 29.99, 59.99, None, 29.99],
-        "Cantidad":  [1, 5, 3, None, 5],
-    })
-
+    return pd.DataFrame(
+        {
+            "ID Venta": [1, 2, 3, 4, 2],
+            "Producto": ["Laptop", "Mouse", "Teclado", "Auriculares", "Mouse"],
+            "Precio": [999.99, 29.99, 59.99, None, 29.99],
+            "Cantidad": [1, 5, 3, None, 5],
+        }
+    )
 
 
 class TestNormalizeColumnNames:
@@ -90,7 +92,11 @@ class TestCleanData:
 
     def test_strips_whitespace(self, dirty_df):
         result = clean_data(dirty_df)
-        str_cols = [c for c in result.columns if result[c].dtype == "object" or isinstance(result[c].dtype, pd.StringDtype)]
+        str_cols = [
+            c
+            for c in result.columns
+            if result[c].dtype == "object" or isinstance(result[c].dtype, pd.StringDtype)
+        ]
         for col in str_cols:
             for val in result[col].dropna():
                 assert val == val.strip()

@@ -11,9 +11,10 @@ Setup:
     4. airflow webserver --port 8080
     5. airflow scheduler
 """
+
 import sys
-from pathlib import Path
 from datetime import datetime, timedelta
+from pathlib import Path
 
 # Add project root to path so src/ imports work
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -23,19 +24,19 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 
 from config.settings import (
+    AIRFLOW_DAG_ID,
+    AIRFLOW_OWNER,
+    AIRFLOW_SCHEDULE,
+    AIRFLOW_START_DATE_D,
+    AIRFLOW_START_DATE_M,
+    AIRFLOW_START_DATE_Y,
+    CLEANING_CONFIG,
     DEFAULT_INPUT_FILE,
     DEFAULT_OUTPUT_FILE,
     DEFAULT_REPORT_FILE,
-    CLEANING_CONFIG,
-    VALIDATION_CONFIG,
-    PIPELINE_VERSION,
-    AIRFLOW_DAG_ID,
-    AIRFLOW_SCHEDULE,
-    AIRFLOW_OWNER,
-    AIRFLOW_START_DATE_Y,
-    AIRFLOW_START_DATE_M,
-    AIRFLOW_START_DATE_D,
     LOGS_DIR,
+    PIPELINE_VERSION,
+    VALIDATION_CONFIG,
 )
 
 # ── Default DAG args ──────────────────────────────────────────────────────────
@@ -52,10 +53,12 @@ default_args = {
 
 # ── Pipeline task functions ───────────────────────────────────────────────────
 
+
 def task_ingest(**context):
     """Ingest raw CSV data and push to XCom."""
     from src.ingestion import load_csv
     from src.logger import get_logger
+
     logger = get_logger("airflow.ingest", log_dir=LOGS_DIR)
 
     logger.info(f"Ingesting data from {DEFAULT_INPUT_FILE}")
@@ -70,9 +73,12 @@ def task_ingest(**context):
 def task_validate(**context):
     """Validate raw data and log quality report."""
     import json
+
     import pandas as pd
-    from src.validation import validate_data, DataQualityReport
+
     from src.logger import get_logger
+    from src.validation import validate_data
+
     logger = get_logger("airflow.validate", log_dir=LOGS_DIR)
 
     df_json = context["ti"].xcom_pull(task_ids="ingest_data", key="df_json")
@@ -95,16 +101,16 @@ def task_validate(**context):
     # accurate before/after comparison in the HTML report.
     # Only primitive types are stored so XCom (SQLite backend) can handle it.
     before_report_dict = {
-        "total_rows":               report.total_rows,
-        "total_cols":               report.total_cols,
-        "duplicate_rows":           report.duplicate_rows,
-        "duplicate_pct":            report.duplicate_pct,
-        "null_counts":              report.null_counts,
-        "null_pcts":                report.null_pcts,
-        "dtypes":                   report.dtypes,
-        "outlier_counts":           report.outlier_counts,
+        "total_rows": report.total_rows,
+        "total_cols": report.total_cols,
+        "duplicate_rows": report.duplicate_rows,
+        "duplicate_pct": report.duplicate_pct,
+        "null_counts": report.null_counts,
+        "null_pcts": report.null_pcts,
+        "dtypes": report.dtypes,
+        "outlier_counts": report.outlier_counts,
         "columns_with_mixed_types": report.columns_with_mixed_types,
-        "alerts":                   report.alerts,
+        "alerts": report.alerts,
     }
 
     context["ti"].xcom_push(key="df_json", value=df.to_json(orient="split"))
@@ -114,8 +120,10 @@ def task_validate(**context):
 def task_clean(**context):
     """Apply data cleaning rules and push cleaned data."""
     import pandas as pd
+
     from src.cleaning import clean_data
     from src.logger import get_logger
+
     logger = get_logger("airflow.clean", log_dir=LOGS_DIR)
 
     df_json = context["ti"].xcom_pull(task_ids="validate_data", key="df_json")
@@ -130,8 +138,10 @@ def task_clean(**context):
 def task_transform(**context):
     """Apply data transformations."""
     import pandas as pd
-    from src.transformation import transform_data
+
     from src.logger import get_logger
+    from src.transformation import transform_data
+
     logger = get_logger("airflow.transform", log_dir=LOGS_DIR)
 
     df_json = context["ti"].xcom_pull(task_ids="clean_data", key="df_json")
@@ -146,10 +156,13 @@ def task_transform(**context):
 def task_load(**context):
     """Save cleaned/transformed data to CSV and generate quality report."""
     import json
+
     import pandas as pd
-    from src.validation import validate_data, DataQualityReport
-    from src.report import generate_quality_report
+
     from src.logger import get_logger
+    from src.report import generate_quality_report
+    from src.validation import DataQualityReport, validate_data
+
     logger = get_logger("airflow.load", log_dir=LOGS_DIR)
 
     df_json = context["ti"].xcom_pull(task_ids="transform_data", key="df_json")
@@ -205,7 +218,6 @@ with DAG(
     catchup=False,
     tags=["dataprep", "etl", "data-engineering"],
 ) as dag:
-
     ingest = PythonOperator(
         task_id="ingest_data",
         python_callable=task_ingest,

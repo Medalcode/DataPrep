@@ -3,13 +3,13 @@ tests/test_ingestion.py
 -----------------------
 Unit tests for the ingestion module.
 """
-import pytest
-import pandas as pd
-from pathlib import Path
-import tempfile
-import os
 
 import sys
+from pathlib import Path
+
+import pandas as pd
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.ingestion import load_csv, load_excel
@@ -27,11 +27,13 @@ def sample_csv(tmp_path):
 @pytest.fixture
 def sample_excel(tmp_path):
     """Create a temporary Excel file for testing."""
-    df = pd.DataFrame({
-        "id":      [1, 2, 3],
-        "nombre":  ["Laptop", "Mouse", "Teclado"],
-        "precio":  [999.99, 29.99, 59.99],
-    })
+    df = pd.DataFrame(
+        {
+            "id": [1, 2, 3],
+            "nombre": ["Laptop", "Mouse", "Teclado"],
+            "precio": [999.99, 29.99, 59.99],
+        }
+    )
     excel_file = tmp_path / "test.xlsx"
     df.to_excel(excel_file, index=False)
     return excel_file

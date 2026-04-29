@@ -3,37 +3,41 @@ tests/test_validation.py
 ------------------------
 Unit tests for the validation module.
 """
-import pytest
-import pandas as pd
-import numpy as np
-from pathlib import Path
+
 import sys
+from pathlib import Path
+
+import pandas as pd
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.validation import validate_data, detect_mixed_type_columns, detect_outliers_iqr
+from src.validation import detect_mixed_type_columns, detect_outliers_iqr, validate_data
 
 
 @pytest.fixture
 def dirty_df():
     """DataFrame with known quality issues."""
-    return pd.DataFrame({
-        "id":       [1, 2, 3, 4, 5, 2],
-        "nombre":   ["Laptop", "Mouse", "Mouse", "Teclado", None, "Mouse"],
-        "precio":   [999.99, 29.99, None, 59.99, 1500.0, 29.99],
-        "cantidad": [1, 5, 3, None, 2, 5],
-    })
-
+    return pd.DataFrame(
+        {
+            "id": [1, 2, 3, 4, 5, 2],
+            "nombre": ["Laptop", "Mouse", "Mouse", "Teclado", None, "Mouse"],
+            "precio": [999.99, 29.99, None, 59.99, 1500.0, 29.99],
+            "cantidad": [1, 5, 3, None, 2, 5],
+        }
+    )
 
 
 @pytest.fixture
 def clean_df():
-    return pd.DataFrame({
-        "id":       [1, 2, 3],
-        "nombre":   ["Laptop", "Mouse", "Teclado"],
-        "precio":   [999.99, 29.99, 59.99],
-        "cantidad": [1, 5, 3],
-    })
+    return pd.DataFrame(
+        {
+            "id": [1, 2, 3],
+            "nombre": ["Laptop", "Mouse", "Teclado"],
+            "precio": [999.99, 29.99, 59.99],
+            "cantidad": [1, 5, 3],
+        }
+    )
 
 
 class TestValidateData:
