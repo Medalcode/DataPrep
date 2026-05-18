@@ -7,6 +7,7 @@ Applies a configurable set of automatic cleaning rules to a DataFrame.
 from __future__ import annotations
 
 import re
+import warnings
 import pandas as pd
 import numpy as np
 from typing import Any, Dict
@@ -58,10 +59,29 @@ def impute_numeric(df: pd.DataFrame, strategy: str = "mean") -> pd.DataFrame:
     return df
 
 
+def _is_date_column(col_name: str) -> bool:
+    """Check if a column looks like a date (handled by transform step)."""
+    return any(k in col_name.lower() for k in ["fecha", "date", "time", "hora", "timestamp"])
+
+
+def _cat_cols(df: pd.DataFrame) -> list:
+    """Get categorical/string column names, compatible with pandas 2 and 3."""
+    cols = []
+    for col in df.columns:
+        dtype = df[col].dtype
+        if isinstance(dtype, pd.CategoricalDtype):
+            cols.append(col)
+        elif isinstance(dtype, pd.StringDtype):
+            cols.append(col)
+        elif dtype == "object":
+            cols.append(col)
+    return cols
+
+
 def impute_categorical(df: pd.DataFrame, strategy: str = "mode") -> pd.DataFrame:
     """Fill null values in categorical/object columns."""
     df = df.copy()
-    cat_cols = df.select_dtypes(include=["object", "category"]).columns
+    cat_cols = [c for c in _cat_cols(df) if not _is_date_column(c)]
     for col in cat_cols:
         if df[col].isnull().any():
             if strategy == "mode" and not df[col].mode().empty:
@@ -115,15 +135,15 @@ def clean_data(
 
     # 3. Strip whitespace from strings
     if config.get("strip_strings", True):
-        obj_cols = df.select_dtypes(include="object").columns
+        obj_cols = _cat_cols(df)
         df[obj_cols] = df[obj_cols].apply(lambda col: col.str.strip())
         logger.debug(f"Stripped whitespace from {len(obj_cols)} string columns")
 
     # 4. Lowercase string columns
     if config.get("lowercase_strings", False):
-        obj_cols = df.select_dtypes(include="object").columns
+        obj_cols = _cat_cols(df)
         df[obj_cols] = df[obj_cols].apply(
-            lambda col: col.str.lower() if col.dtype == "object" else col
+            lambda col: col.str.lower() if col.dtype in ("object", "string") else col
         )
 
     # 5. Drop duplicates

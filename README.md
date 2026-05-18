@@ -7,7 +7,8 @@
 [![Pandas](https://img.shields.io/badge/Pandas-2.2-150458?logo=pandas)](https://pandas.pydata.org)
 [![Airflow](https://img.shields.io/badge/Apache%20Airflow-2.9-017CEE?logo=apacheairflow)](https://airflow.apache.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.35-FF4B4B?logo=streamlit)](https://streamlit.io)
-[![Tests](https://img.shields.io/badge/Tests-48%20passed-22c55e?logo=pytest)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-56%20passed-22c55e?logo=pytest)](tests/)
+[![CI](https://github.com/Medalcode/DataPrep/actions/workflows/ci.yml/badge.svg)](https://github.com/Medalcode/DataPrep/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---

@@ -16,6 +16,16 @@ from src.logger import get_logger
 logger = get_logger("validation")
 
 
+def _object_cols(df: pd.DataFrame) -> list:
+    """Get object/string dtype columns, compatible with pandas 2 and 3."""
+    cols = []
+    for col in df.columns:
+        dtype = df[col].dtype
+        if dtype == "object" or isinstance(dtype, pd.StringDtype):
+            cols.append(col)
+    return cols
+
+
 @dataclass
 class DataQualityReport:
     """Structured summary of data quality metrics."""
@@ -52,7 +62,7 @@ def detect_mixed_type_columns(df: pd.DataFrame) -> list[str]:
     Identify columns that contain mixed data types (e.g., numbers stored as strings).
     """
     mixed = []
-    for col in df.select_dtypes(include="object").columns:
+    for col in _object_cols(df):
         sample = df[col].dropna()
         numeric_count = pd.to_numeric(sample, errors="coerce").notna().sum()
         if 0 < numeric_count < len(sample):

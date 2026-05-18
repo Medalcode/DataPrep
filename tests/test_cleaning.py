@@ -88,7 +88,7 @@ class TestCleanData:
 
     def test_strips_whitespace(self, dirty_df):
         result = clean_data(dirty_df)
-        str_cols = result.select_dtypes(include="object").columns
+        str_cols = [c for c in result.columns if result[c].dtype == "object" or isinstance(result[c].dtype, pd.StringDtype)]
         for col in str_cols:
             for val in result[col].dropna():
                 assert val == val.strip()

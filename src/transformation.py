@@ -38,7 +38,15 @@ def parse_date_columns(df: pd.DataFrame, date_cols: list[str] | None = None) -> 
         if col not in df.columns:
             continue
         try:
-            df[col] = pd.to_datetime(df[col], errors="coerce")
+            nulls_before = df[col].isna().sum()
+            parsed = pd.to_datetime(df[col], errors="coerce")
+            nulls_from_parse = parsed.isna().sum() - nulls_before
+            if nulls_from_parse > 0:
+                parsed_mixed = pd.to_datetime(df[col], errors="coerce", format="mixed")
+                if parsed_mixed.isna().sum() < parsed.isna().sum():
+                    parsed = parsed_mixed
+                    logger.info(f"Column '{col}': using mixed format parsing")
+            df[col] = parsed
             null_dates = df[col].isnull().sum()
             if null_dates > 0:
                 logger.warning(f"Column '{col}': {null_dates} dates could not be parsed")
@@ -66,6 +74,8 @@ def add_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
     if "precio" in df.columns and "cantidad" in df.columns:
+        df["precio"] = df["precio"].abs()
+        df["cantidad"] = df["cantidad"].abs()
         df["total"] = (df["precio"] * df["cantidad"]).round(2)
         logger.info("Derived column 'total' = precio × cantidad")
 

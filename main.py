@@ -27,7 +27,7 @@ from config.settings import (
     LOGS_DIR,
 )
 from src.logger import get_logger
-from src.ingestion import load_csv
+from src.ingestion import load_csv, load_excel, load_json_api
 from src.validation import validate_data
 from src.cleaning import clean_data
 from src.transformation import transform_data
@@ -36,7 +36,13 @@ from src.report import generate_quality_report
 logger = get_logger("main", log_dir=LOGS_DIR)
 
 
-def run_pipeline(input_path: Path, output_path: Path, report_path: Path) -> bool:
+def run_pipeline(
+    input_path: Path,
+    output_path: Path,
+    report_path: Path,
+    file_format: str = "csv",
+    api_url: str | None = None,
+) -> bool:
     """
     Execute the full DataPrep pipeline.
 
@@ -51,7 +57,15 @@ def run_pipeline(input_path: Path, output_path: Path, report_path: Path) -> bool
     # ── STEP 1: INGEST ──────────────────────────────────────────────────────
     logger.info("[1/5] INGESTION")
     try:
-        df_raw = load_csv(input_path)
+        if file_format == "excel":
+            df_raw = load_excel(input_path)
+        elif file_format == "api":
+            if api_url is None:
+                logger.error("API URL required when format is 'api'")
+                return False
+            df_raw = load_json_api(api_url)
+        else:
+            df_raw = load_csv(input_path)
     except FileNotFoundError as e:
         logger.error(f"Input file not found: {e}")
         logger.error("Run 'python generate_dataset.py' first to create test data.")
@@ -118,19 +132,32 @@ def parse_args() -> argparse.Namespace:
         "--input", "-i",
         type=Path,
         default=DEFAULT_INPUT_FILE,
-        help=f"Input CSV file path (default: {DEFAULT_INPUT_FILE})",
+        help=f"Input file path (default: {DEFAULT_INPUT_FILE})",
     )
     parser.add_argument(
         "--output", "-o",
         type=Path,
         default=DEFAULT_OUTPUT_FILE,
-        help=f"Output CSV file path (default: {DEFAULT_OUTPUT_FILE})",
+        help=f"Output CSV path (default: {DEFAULT_OUTPUT_FILE})",
     )
     parser.add_argument(
         "--report", "-r",
         type=Path,
         default=DEFAULT_REPORT_FILE,
         help=f"HTML report output path (default: {DEFAULT_REPORT_FILE})",
+    )
+    parser.add_argument(
+        "--format", "-f",
+        type=str,
+        default="csv",
+        choices=["csv", "excel", "api"],
+        help="Input file format: csv, excel, or api (default: csv)",
+    )
+    parser.add_argument(
+        "--api-url",
+        type=str,
+        default=None,
+        help="API endpoint URL when --format=api",
     )
     return parser.parse_args()
 
@@ -141,5 +168,7 @@ if __name__ == "__main__":
         input_path=args.input,
         output_path=args.output,
         report_path=args.report,
+        file_format=args.format,
+        api_url=args.api_url,
     )
     sys.exit(0 if success else 1)
